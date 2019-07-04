@@ -6,7 +6,7 @@ Pretty self-explanatory... It's a simple brain viewer written
 with matplotlib. Useful if you just want to view a volume quickly
 in python.
 
-Will add 4D volume viewing soon...
+Will add 4D volume viewing and voxel selection soon...
 
 ###### Usage
 

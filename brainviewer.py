@@ -5,9 +5,12 @@
     Just something simple to quickly load and view 3D volumes with python
 """
 import argparse
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider,Button
-import nibabel as nib
+
+# eliminate toolbar when rendering window
+mpl.rcParams['toolbar'] = 'None'
 
 """
     Defines an updater class so that we can multi-purpose our
@@ -52,10 +55,11 @@ class BrainViewer:
     def __init__(self,data,w=12,h=6):
         # Create figure and axes
         self.f = plt.figure(figsize=(w,h))
+        self.f.canvas.set_window_title('Brain Viewer')
         self.f.patch.set_facecolor('#BBBBBB')
-        self.ax1 = self.f.add_axes([0.06,0.25,0.28,0.7]); self.ax1.axis('off')
-        self.ax2 = self.f.add_axes([0.36,0.25,0.28,0.7]); self.ax2.axis('off')
-        self.ax3 = self.f.add_axes([0.66,0.25,0.28,0.7]); self.ax3.axis('off')
+        self.ax1 = self.f.add_axes([0.06,0.20,0.28,0.75]); self.ax1.axis('off')
+        self.ax2 = self.f.add_axes([0.36,0.20,0.28,0.75]); self.ax2.axis('off')
+        self.ax3 = self.f.add_axes([0.66,0.20,0.28,0.75]); self.ax3.axis('off')
         plt.subplots_adjust(bottom=0.25)
 
         # set initial slices
@@ -65,18 +69,18 @@ class BrainViewer:
         Tinit = int(dim[2]/2)
 
         # Create sliders and buttons
-        self.slider1 = Slider(self.f.add_axes([0.1,0.2,0.2,0.03],xticks=[],yticks=[]),
+        self.slider1 = Slider(self.f.add_axes([0.1,0.15,0.2,0.03],xticks=[],yticks=[]),
             'S',0,dim[0]-1,valinit=Sinit,valstep=1,valfmt='%1.0f')
-        self.slider2 = Slider(self.f.add_axes([0.4,0.2,0.2,0.03],xticks=[],yticks=[]),
+        self.slider2 = Slider(self.f.add_axes([0.4,0.15,0.2,0.03],xticks=[],yticks=[]),
             'C',0,dim[1]-1,valinit=Cinit,valstep=1,valfmt='%1.0f')
-        self.slider3 = Slider(self.f.add_axes([0.7,0.2,0.2,0.03],xticks=[],yticks=[]),
+        self.slider3 = Slider(self.f.add_axes([0.7,0.15,0.2,0.03],xticks=[],yticks=[]),
             'T',0,dim[2]-1,valinit=Tinit,valstep=1,valfmt='%1.0f')
-        self.button1down = Button(self.f.add_axes([0.1,0.1,0.1,0.1]),'-', hovercolor='0.9')
-        self.button1up = Button(self.f.add_axes([0.2,0.1,0.1,0.1]),'+', hovercolor='0.9')
-        self.button2down = Button(self.f.add_axes([0.4,0.1,0.1,0.1]),'-', hovercolor='0.9')
-        self.button2up = Button(self.f.add_axes([0.5,0.1,0.1,0.1]),'+', hovercolor='0.9')
-        self.button3down = Button(self.f.add_axes([0.7,0.1,0.1,0.1]),'-', hovercolor='0.9')
-        self.button3up = Button(self.f.add_axes([0.8,0.1,0.1,0.1]),'+', hovercolor='0.9')
+        self.button1down = Button(self.f.add_axes([0.1,0.1,0.1,0.05]),'-', hovercolor='0.9')
+        self.button1up = Button(self.f.add_axes([0.2,0.1,0.1,0.05]),'+', hovercolor='0.9')
+        self.button2down = Button(self.f.add_axes([0.4,0.1,0.1,0.05]),'-', hovercolor='0.9')
+        self.button2up = Button(self.f.add_axes([0.5,0.1,0.1,0.05]),'+', hovercolor='0.9')
+        self.button3down = Button(self.f.add_axes([0.7,0.1,0.1,0.05]),'-', hovercolor='0.9')
+        self.button3up = Button(self.f.add_axes([0.8,0.1,0.1,0.05]),'+', hovercolor='0.9')
 
         # add event listeners for each control
         self.slider1.on_changed(Updater((self.ax1,lambda x: data[x,:,:].T),change_image))
@@ -110,5 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('volume', help='brain volume to view')
     args = parser.parse_args()
 
+    # load data with nibabel
+    import nibabel as nib
     data = nib.load(args.volume).get_fdata()
     plot_brain(data)
