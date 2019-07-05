@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
     A simple brain viewing tool with matplotlib
 
@@ -35,7 +35,7 @@ class Updater:
 # delete old image and plot new image in axe
 def change_image(control,val,dim):
     del control[0].images[0]
-    control[0].imshow(control[1](int(val)),origin='lower',cmap='gray')
+    control[0].imshow(control[1](int(val)),origin='lower',cmap='gray',vmax=control[2],vmin=control[3])
 
 # decrement sliders
 def decrement(control,val,dim):
@@ -62,12 +62,16 @@ class BrainViewer:
         self.ax2 = self.f.add_axes([0.36,0.20,0.28,0.75]); self.ax2.axis('off')
         self.ax3 = self.f.add_axes([0.66,0.20,0.28,0.75]); self.ax3.axis('off')
         plt.subplots_adjust(bottom=0.25)
-
+        
         # set initial slices
         dim = data.shape
         Sinit = int(dim[0]/2)
         Cinit = int(dim[1]/2)
         Tinit = int(dim[2]/2)
+
+        # get data max/min
+        dmax = data.max()
+        dmin = data.min()
 
         # Create sliders and buttons
         self.slider1 = Slider(self.f.add_axes([0.1,0.15,0.2,0.03],xticks=[],yticks=[],facecolor='#222222'),
@@ -84,9 +88,9 @@ class BrainViewer:
         self.button3up = Button(self.f.add_axes([0.8,0.1,0.1,0.05]),'+',color='#222222',hovercolor='#333333')
 
         # add event listeners for each control
-        self.slider1.on_changed(Updater((self.ax1,lambda x: data[x,:,:].T),change_image))
-        self.slider2.on_changed(Updater((self.ax2,lambda x: data[:,x,:].T),change_image))
-        self.slider3.on_changed(Updater((self.ax3,lambda x: data[:,:,x].T),change_image))
+        self.slider1.on_changed(Updater((self.ax1,lambda x: data[x,:,:].T,dmax,dmin),change_image))
+        self.slider2.on_changed(Updater((self.ax2,lambda x: data[:,x,:].T,dmax,dmin),change_image))
+        self.slider3.on_changed(Updater((self.ax3,lambda x: data[:,:,x].T,dmax,dmin),change_image))
         self.button1down.on_clicked(Updater(self.slider1,decrement))
         self.button2down.on_clicked(Updater(self.slider2,decrement))
         self.button3down.on_clicked(Updater(self.slider3,decrement))
@@ -95,9 +99,9 @@ class BrainViewer:
         self.button3up.on_clicked(Updater(self.slider3,increment,dim[2]))
 
         # plot initial slices
-        self.ax1.imshow(data[Sinit,:,:].T,origin='lower',cmap='gray')
-        self.ax2.imshow(data[:,Cinit,:].T,origin='lower',cmap='gray')
-        self.ax3.imshow(data[:,:,Tinit].T,origin='lower',cmap='gray')
+        self.ax1.imshow(data[Sinit,:,:].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
+        self.ax2.imshow(data[:,Cinit,:].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
+        self.ax3.imshow(data[:,:,Tinit].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
 
 """
     Create BrainViewer object and plot the figure
