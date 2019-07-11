@@ -106,9 +106,9 @@ class BrainViewer:
 """
     Create BrainViewer object and plot the figure
 """
-def plot_brain(data):
+def plot_brain(data,block=True):
     brainviewer = BrainViewer(data)
-    plt.show(block=True)
+    plt.show(block)
 
 """
     Command line tool for BrainViewer
