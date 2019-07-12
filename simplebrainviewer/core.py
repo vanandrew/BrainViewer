@@ -4,12 +4,11 @@
 
     Just something simple to quickly load and view 3D volumes with python
 """
-import argparse
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider,Button
 
-# set matplotlib global settings 
+# set matplotlib global settings
 mpl.rcParams['toolbar'] = 'None'
 mpl.rcParams['text.color'] = '#DDDDDD'
 
@@ -56,13 +55,13 @@ class BrainViewer:
     def __init__(self,data,w=12,h=6):
         # Create figure and axes
         self.f = plt.figure(figsize=(w,h))
-        self.f.canvas.set_window_title('Brain Viewer')
+        self.f.canvas.set_window_title('SimpleBrainViewer')
         self.f.patch.set_facecolor('#000000')
         self.ax1 = self.f.add_axes([0.06,0.20,0.28,0.75]); self.ax1.axis('off')
         self.ax2 = self.f.add_axes([0.36,0.20,0.28,0.75]); self.ax2.axis('off')
         self.ax3 = self.f.add_axes([0.66,0.20,0.28,0.75]); self.ax3.axis('off')
         plt.subplots_adjust(bottom=0.25)
-        
+
         # set initial slices
         dim = data.shape
         Sinit = int(dim[0]/2)
@@ -108,18 +107,7 @@ class BrainViewer:
 """
 def plot_brain(data,block=True):
     brainviewer = BrainViewer(data)
-    plt.show(block)
-
-"""
-    Command line tool for BrainViewer
-"""
-if __name__ == '__main__':
-    # parse arguments
-    parser = argparse.ArgumentParser(description='View a brain volume (Only does 3D, no 4D yet!)')
-    parser.add_argument('volume', help='brain volume to view')
-    args = parser.parse_args()
-
-    # load data with nibabel
-    import nibabel as nib
-    data = nib.load(args.volume).get_fdata()
-    plot_brain(data)
+    plt.show(block=block)
+    # if you are non-blocking, assign the return value
+    # to something to keep the plot reference alive
+    return brainviewer
