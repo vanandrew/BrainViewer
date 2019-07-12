@@ -1,4 +1,4 @@
-# BrainViewer
+# SimpleBrainViewer
 A simple brain viewer using matplotlib
 
 ###### What is this?
@@ -17,14 +17,14 @@ You can call BrainViewer from python or the command line (via nifti file or any 
   Example
 """
 import nibabel as nib
-from brainviewer import *
+from simplebrainviewer import *
 import matplotlib.pyplot as plt
 
 # load a volume
 data = nib.load('/a/nifti/file').get_fdata()
 
 # plot the data
-brainviewer.plot_brain(data)
+simplebrainviewer.plot_brain(data)
 
 ```
 
