@@ -7,7 +7,7 @@ with open("README.md","r") as fh:
 
 setuptools.setup(
     name="simplebrainviewer",
-    version='0.0',
+    version='0.1',
     author="Andrew Van",
     author_email="vanandrew@wustl.edu",
     description="A simple brain viewer using matplotlib",
