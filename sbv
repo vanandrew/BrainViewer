@@ -13,5 +13,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # load data with nibabel
-    data = nib.load(args.volume).get_fdata()
+    data = nib.load(args.volume)
     plot_brain(data)

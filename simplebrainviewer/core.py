@@ -7,100 +7,192 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider,Button
+import nibabel as nib
+import numpy as np
 
 # set matplotlib global settings
 mpl.rcParams['toolbar'] = 'None'
 mpl.rcParams['text.color'] = '#DDDDDD'
 
 """
-    Defines an updater class so that we can multi-purpose our
-    update method for several controls
-"""
-class Updater:
-    # save the control/method to call
-    # the method should accept (control,val,dim) as input
-    # optional dim argument for dimension limits
-    def __init__(self,control,method,dim=None):
-        self.control = control
-        self.method = method
-        self.dim = dim
-    # pass the control and value to the method
-    def __call__(self,val):
-        self.method(self.control,val,self.dim)
-
-"""
     Define methods for control elements
 """
-# delete old image and plot new image in axe
-def change_image(control,val,dim):
-    del control[0].images[0]
-    control[0].imshow(control[1](int(val)),origin='lower',cmap='gray',vmax=control[2],vmin=control[3])
+class Control:
+    def __init__(self,
+                 figure,
+                 position,
+                 label,
+                 initial_value,
+                 dim):
+        """
+            Control group for slice 
+        """
+        # Slider
+        self.slider = Slider(figure.add_axes(position,xticks=[],yticks=[],facecolor='#222222'),
+            label,0,dim-1,valinit=initial_value,valstep=1,valfmt='%1.0f',color='#444444')
 
-# decrement sliders
-def decrement(control,val,dim):
-    new_val = control.val - 1
-    if new_val >= 0:
-        control.set_val(new_val)
+        # Set Button Positions
+        position[1] = position[1]-0.04; position[2] = position[2]/2; position[3] = 0.04
+        self.buttondown = Button(figure.add_axes(position),'-',color='#222222',hovercolor='#333333')
 
-# increment slider (Add dim arg for limit)
-def increment(control,val,dim):
-    new_val = control.val + 1
-    if new_val < dim:
-        control.set_val(new_val)
+        # Buttons
+        position[0] = position[0] + position[2]; 
+        self.buttonup = Button(figure.add_axes(position),'+',color='#222222',hovercolor='#333333')
+
+        # save value for display
+        self.value = initial_value
+
+        # save dim for slider limit
+        self.lim = dim
+
+    def get_value(self):
+        """
+            Returns the current value of the control
+        """
+        return int(self.value)
+
+    # decrement slider
+    def decrement(self, event):
+        new_val = self.value - 1
+        if new_val >= 0:
+            self.slider.set_val(new_val)
+
+    # increment slider
+    def increment(self, event):
+        new_val = self.value + 1
+        if new_val < self.lim:
+            self.slider.set_val(new_val)
+
+    # update control
+    def update(self, value, callback_func):
+        """
+            Updates the current value of the control then runs the
+            callback_func with the current value
+        """
+        self.value = int(value) # set new value
+        callback_func(int(value)) # execute callback
+
+class ControlManager:
+    def __init__(self, ax_dict, control_dict):
+        self.ax_dict = ax_dict
+        self.control_dict = control_dict
+
+    def link(self, key, callback_func):
+        # Link slider object
+        # This call the update method on the control so that its current value is updated
+        # before passing it to the display via the callback_func
+        self.get_control(key).slider.on_changed(
+            lambda x: self.get_control(key).update(x, callback_func)
+        )
+        # Link increment/decrement buttons
+        self.get_control(key).buttondown.on_clicked(
+            self.get_control(key).decrement
+        )
+        self.get_control(key).buttonup.on_clicked(
+            self.get_control(key).increment
+        )
+
+    def update(self, key, data, lims):
+        self.get_ax(key).imshow(data, origin='lower', cmap='gray', vmin=lims[0], vmax=lims[1])
+
+    def get_control(self, key):
+        return self.control_dict[key]
+
+    def get_ax(self, key):
+        return self.ax_dict[key]
 
 """
     Brain viewer
 """
 class BrainViewer:
-    def __init__(self,data,w=12,h=6):
+    def __init__(self, img: nib.Nifti1Image, width=12, height=6):
         # Create figure and axes
-        self.f = plt.figure(figsize=(w,h))
+        self.f = plt.figure(figsize=(width,height))
         self.f.canvas.set_window_title('SimpleBrainViewer')
         self.f.patch.set_facecolor('#000000')
-        self.ax1 = self.f.add_axes([0.06,0.20,0.28,0.75]); self.ax1.axis('off')
-        self.ax2 = self.f.add_axes([0.36,0.20,0.28,0.75]); self.ax2.axis('off')
-        self.ax3 = self.f.add_axes([0.66,0.20,0.28,0.75]); self.ax3.axis('off')
+        ax0 = self.f.add_axes([0.06,0.20,0.28,0.75]); ax0.axis('off')
+        ax1 = self.f.add_axes([0.36,0.20,0.28,0.75]); ax1.axis('off')
+        ax2 = self.f.add_axes([0.66,0.20,0.28,0.75]); ax2.axis('off')
         plt.subplots_adjust(bottom=0.25)
+
+        # get copy of data
+        data = img.get_fdata()
 
         # set initial slices
         dim = data.shape
+        if len(dim) == 3: # if only 3 dims, add 4th
+            data = data[:,:,:,np.newaxis]
+            dim = data.shape
         Sinit = int(dim[0]/2)
         Cinit = int(dim[1]/2)
         Tinit = int(dim[2]/2)
+        Finit = 0
 
         # get data max/min
         dmax = data.max()
         dmin = data.min()
 
-        # Create sliders and buttons
-        self.slider1 = Slider(self.f.add_axes([0.1,0.15,0.2,0.03],xticks=[],yticks=[],facecolor='#222222'),
-            'S',0,dim[0]-1,valinit=Sinit,valstep=1,valfmt='%1.0f',color='#444444')
-        self.slider2 = Slider(self.f.add_axes([0.4,0.15,0.2,0.03],xticks=[],yticks=[],facecolor='#222222'),
-            'C',0,dim[1]-1,valinit=Cinit,valstep=1,valfmt='%1.0f',color='#444444')
-        self.slider3 = Slider(self.f.add_axes([0.7,0.15,0.2,0.03],xticks=[],yticks=[],facecolor='#222222'),
-            'T',0,dim[2]-1,valinit=Tinit,valstep=1,valfmt='%1.0f',color='#444444')
-        self.button1down = Button(self.f.add_axes([0.1,0.1,0.1,0.05]),'-',color='#222222',hovercolor='#333333')
-        self.button1up = Button(self.f.add_axes([0.2,0.1,0.1,0.05]),'+',color='#222222',hovercolor='#333333')
-        self.button2down = Button(self.f.add_axes([0.4,0.1,0.1,0.05]),'-',color='#222222',hovercolor='#333333')
-        self.button2up = Button(self.f.add_axes([0.5,0.1,0.1,0.05]),'+',color='#222222',hovercolor='#333333')
-        self.button3down = Button(self.f.add_axes([0.7,0.1,0.1,0.05]),'-',color='#222222',hovercolor='#333333')
-        self.button3up = Button(self.f.add_axes([0.8,0.1,0.1,0.05]),'+',color='#222222',hovercolor='#333333')
+        # Create controls
+        self.control_manager = ControlManager(
+        {
+            "sagittal": ax0,
+            "coronal": ax1,
+            "transverse": ax2
+        },
+        {
+            "sagittal_control": Control(self.f, [0.1,0.175,0.2,0.03], 'S', Sinit, dim[0]),
+            "coronal_control": Control(self.f, [0.4,0.175,0.2,0.03], 'C', Cinit, dim[1]),
+            "transverse_control": Control(self.f, [0.7,0.175,0.2,0.03], 'T', Tinit, dim[2]),
+            "frame_control": Control(self.f, [0.35,0.075,0.3,0.03], 'Frame', Finit, dim[3])
+        })
 
-        # add event listeners for each control
-        self.slider1.on_changed(Updater((self.ax1,lambda x: data[x,:,:].T,dmax,dmin),change_image))
-        self.slider2.on_changed(Updater((self.ax2,lambda x: data[:,x,:].T,dmax,dmin),change_image))
-        self.slider3.on_changed(Updater((self.ax3,lambda x: data[:,:,x].T,dmax,dmin),change_image))
-        self.button1down.on_clicked(Updater(self.slider1,decrement))
-        self.button2down.on_clicked(Updater(self.slider2,decrement))
-        self.button3down.on_clicked(Updater(self.slider3,decrement))
-        self.button1up.on_clicked(Updater(self.slider1,increment,dim[0]))
-        self.button2up.on_clicked(Updater(self.slider2,increment,dim[1]))
-        self.button3up.on_clicked(Updater(self.slider3,increment,dim[2]))
+        # define slice functions
+        sagittal_slice = lambda x,t: data[x,:,:,t].T
+        coronal_slice = lambda x,t: data[:,x,:,t].T
+        transverse_slice =lambda x,t: data[:,:,x,t].T
+        
+        # update display
+        self.control_manager.update("sagittal", sagittal_slice(Sinit, Finit), [dmin, dmax])
+        self.control_manager.update("coronal", coronal_slice(Cinit, Finit), [dmin, dmax])
+        self.control_manager.update("transverse", transverse_slice(Tinit, Finit), [dmin, dmax])
 
-        # plot initial slices
-        self.ax1.imshow(data[Sinit,:,:].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
-        self.ax2.imshow(data[:,Cinit,:].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
-        self.ax3.imshow(data[:,:,Tinit].T,origin='lower',cmap='gray',vmax=dmax,vmin=dmin)
+        # add event listeners for each slice control
+        self.control_manager.link("sagittal_control",
+            lambda x: self.control_manager.update(
+                "sagittal",
+                sagittal_slice(int(x),self.control_manager.get_control("frame_control").get_value()), # callback to execute
+                [dmin, dmax]
+            )
+        )
+        self.control_manager.link("coronal_control",
+            lambda x: self.control_manager.update(
+                "coronal",
+                coronal_slice(int(x),self.control_manager.get_control("frame_control").get_value()), # callback to execute
+                [dmin, dmax]
+            )
+        )
+        self.control_manager.link("transverse_control",
+            lambda x: self.control_manager.update(
+                "transverse",
+                transverse_slice(int(x),self.control_manager.get_control("frame_control").get_value()),
+                [dmin, dmax]
+            )
+        )
+
+        # simply update all other controls with the frame control
+        def framefunc(frame):
+            # just set each of the sliders to their current values, but it should parse the updated
+            # frame info (We don't need to use the frame value because it should auto grab it)
+            self.control_manager.get_control("sagittal_control").slider.set_val(
+                self.control_manager.get_control("sagittal_control").get_value()
+            )
+            self.control_manager.get_control("coronal_control").slider.set_val(
+                self.control_manager.get_control("coronal_control").get_value()
+            )
+            self.control_manager.get_control("transverse_control").slider.set_val(
+                self.control_manager.get_control("transverse_control").get_value()
+            )
+        self.control_manager.link("frame_control", framefunc)
 
 """
     Create BrainViewer object and plot the figure
