@@ -92,8 +92,10 @@ class ControlManager:
             self.get_control(key).increment
         )
 
-    def update(self, key, data, lims):
-        self.get_ax(key).imshow(data, origin='lower', cmap='gray', vmin=lims[0], vmax=lims[1])
+    def update(self, display, key, data, lims):
+        # update the display
+        display.set_data(data)
+        plt.draw()
 
     def get_control(self, key):
         return self.control_dict[key]
@@ -151,14 +153,16 @@ class BrainViewer:
         coronal_slice = lambda x,t: data[:,x,:,t].T
         transverse_slice =lambda x,t: data[:,:,x,t].T
         
-        # update display
-        self.control_manager.update("sagittal", sagittal_slice(Sinit, Finit), [dmin, dmax])
-        self.control_manager.update("coronal", coronal_slice(Cinit, Finit), [dmin, dmax])
-        self.control_manager.update("transverse", transverse_slice(Tinit, Finit), [dmin, dmax])
+        # create initial display
+        d0 = self.control_manager.get_ax("sagittal").imshow(sagittal_slice(Sinit, Finit), origin='lower', cmap='gray', vmin=dmin, vmax=dmax)
+        d1 = self.control_manager.get_ax("coronal").imshow(coronal_slice(Cinit, Finit), origin='lower', cmap='gray', vmin=dmin, vmax=dmax)
+        d2 = self.control_manager.get_ax("transverse").imshow(transverse_slice(Tinit, Finit), origin='lower', cmap='gray', vmin=dmin, vmax=dmax)
 
         # add event listeners for each slice control
+        # TODO: changed the display logic so need to redo some of the update method inputs
         self.control_manager.link("sagittal_control",
             lambda x: self.control_manager.update(
+                d0,
                 "sagittal",
                 sagittal_slice(int(x),self.control_manager.get_control("frame_control").get_value()), # callback to execute
                 [dmin, dmax]
@@ -166,6 +170,7 @@ class BrainViewer:
         )
         self.control_manager.link("coronal_control",
             lambda x: self.control_manager.update(
+                d1,
                 "coronal",
                 coronal_slice(int(x),self.control_manager.get_control("frame_control").get_value()), # callback to execute
                 [dmin, dmax]
@@ -173,6 +178,7 @@ class BrainViewer:
         )
         self.control_manager.link("transverse_control",
             lambda x: self.control_manager.update(
+                d2,
                 "transverse",
                 transverse_slice(int(x),self.control_manager.get_control("frame_control").get_value()),
                 [dmin, dmax]
