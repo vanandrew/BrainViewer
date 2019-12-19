@@ -14,4 +14,5 @@ if __name__ == '__main__':
 
     # load data with nibabel
     data = nib.load(args.volume)
+    data = nib.as_closest_canonical(data)
     plot_brain(data)
