@@ -25,7 +25,7 @@ class Control:
                  initial_value,
                  dim):
         """
-            Control group for slice 
+            Control group for slice
         """
         # Slider
         self.slider = Slider(figure.add_axes(position,xticks=[],yticks=[],facecolor='#222222'),
@@ -36,7 +36,7 @@ class Control:
         self.buttondown = Button(figure.add_axes(position),'-',color='#222222',hovercolor='#333333')
 
         # Buttons
-        position[0] = position[0] + position[2]; 
+        position[0] = position[0] + position[2];
         self.buttonup = Button(figure.add_axes(position),'+',color='#222222',hovercolor='#333333')
 
         # save value for display
@@ -124,6 +124,7 @@ class BrainViewer:
         dim = data.shape
         if len(dim) == 3: # if only 3 dims, add 4th
             data = data[:,:,:,np.newaxis]
+            data = np.concatenate((data,data), axis=3)
             dim = data.shape
         Sinit = int(dim[0]/2)
         Cinit = int(dim[1]/2)
@@ -152,7 +153,7 @@ class BrainViewer:
         sagittal_slice = lambda x,t: data[x,:,:,t].T
         coronal_slice = lambda x,t: data[:,x,:,t].T
         transverse_slice =lambda x,t: data[:,:,x,t].T
-        
+
         # create initial display
         d0 = self.control_manager.get_ax("sagittal").imshow(sagittal_slice(Sinit, Finit), origin='lower', cmap='gray', vmin=dmin, vmax=dmax)
         d1 = self.control_manager.get_ax("coronal").imshow(coronal_slice(Cinit, Finit), origin='lower', cmap='gray', vmin=dmin, vmax=dmax)
