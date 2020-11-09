@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider,Button
 import nibabel as nib
 import numpy as np
+from typing import Union
 
 # set matplotlib global settings
 mpl.rcParams['toolbar'] = 'None'
@@ -107,7 +108,7 @@ class ControlManager:
     Brain viewer
 """
 class BrainViewer:
-    def __init__(self, img: nib.Nifti1Image, width=12, height=6):
+    def __init__(self, img: Union[nib.Nifti1Image, np.ndarray], width=12, height=6):
         # Create figure and axes
         self.f = plt.figure(figsize=(width,height))
         self.f.canvas.set_window_title('SimpleBrainViewer')
@@ -118,7 +119,12 @@ class BrainViewer:
         plt.subplots_adjust(bottom=0.25)
 
         # get copy of data
-        data = img.get_fdata()
+        if type(img) is np.ndarray:
+            data = img
+        elif type(img) is nib.Nifti1Image:
+            data = img.get_fdata()
+        else:
+            raise TypeError("Not a numpy array or Nifti1Image!")
 
         # set initial slices
         dim = data.shape
