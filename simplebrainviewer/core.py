@@ -37,7 +37,7 @@ class Control:
         self.buttondown = Button(figure.add_axes(position),'-',color='#222222',hovercolor='#333333')
 
         # Buttons
-        position[0] = position[0] + position[2];
+        position[0] = position[0] + position[2]
         self.buttonup = Button(figure.add_axes(position),'+',color='#222222',hovercolor='#333333')
 
         # save value for display
