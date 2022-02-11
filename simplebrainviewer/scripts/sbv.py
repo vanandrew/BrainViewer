@@ -1,15 +1,12 @@
-#!/usr/bin/env python3
 import argparse
 import nibabel as nib
 from simplebrainviewer import plot_brain
 
-"""
-    Command line tool for BrainViewer
-"""
-if __name__ == '__main__':
+
+def main() -> None:
     # parse arguments
-    parser = argparse.ArgumentParser(description='View a brain volume (Only does 3D, no 4D yet!)')
-    parser.add_argument('volume', help='brain volume to view')
+    parser = argparse.ArgumentParser(description="View a brain volume")
+    parser.add_argument("volume", help="brain volume to view")
     args = parser.parse_args()
 
     # load data with nibabel
