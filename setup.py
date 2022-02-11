@@ -1,28 +1,22 @@
-#!/usr/bin/env python3
-import setuptools
-import os
+import sys
+import site
+from pathlib import Path
+from setuptools import setup
 
-with open("README.md","r") as fh:
-    long_description = fh.read()
+# This line enables user based installation when using pip in editable mode with the latest
+# pyproject.toml config.
+site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
+THISDIR = Path(__file__).parent
 
-setuptools.setup(
-    name="simplebrainviewer",
-    version='0.2',
-    author="Andrew Van",
-    author_email="vanandrew@wustl.edu",
-    description="A simple brain viewer using matplotlib",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/vanandrew/SimpleBrainViewer",
-    packages=setuptools.find_packages(),
-    install_requires=[
-        'nibabel',
-        'matplotlib',
-    ],
-    scripts=['sbv'],
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ]
+# get scripts path
+scripts_path = THISDIR / "simplebrainviewer" / "scripts"
+
+setup(
+    entry_points={
+        "console_scripts": [
+            f"{f.stem}=simplebrainviewer.scripts.{f.stem}:main"
+            for f in scripts_path.glob("*.py")
+            if f.name not in "__init__.py"
+        ]
+    }
 )
