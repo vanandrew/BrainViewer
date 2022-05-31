@@ -30,7 +30,7 @@ simplebrainviewer.plot_brain(data)
 ```
 usage: brainviewer.py [-h] volume
 
-View a brain volume (Only does 3D, no 4D yet!)
+View a brain volume
 
 positional arguments:
   volume      brain volume to view
